@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OmniChat | Liquid Glass</title>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --text-light: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --accent: #007AFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; }
+
+        body {
+            background: linear-gradient(45deg, #ff00cc, #333399, #00c9ff, #92fe9d);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        /* Sidebar (Settings & Keys) */
+        .sidebar {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 20px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 10;
+        }
+
+        .sidebar h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 6px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        select option { background: #333; color: white; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        button:hover { background: rgba(255, 255, 255, 0.3); transform: scale(1.02); }
+        button:active { transform: scale(0.98); }
+        
+        .btn-primary { background: var(--accent); }
+        .btn-primary:hover { background: #0066d6; }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        .message {
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.5;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            word-wrap: break-word;
+        }
+
+        .msg-user {
+            background: var(--accent);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-ai {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .chat-input-container {
+            padding: 16px 24px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 12px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .chat-input-container input {
+            flex: 1;
+            border-radius: 20px;
+            padding: 14px 20px;
+            font-size: 15px;
+        }
+
+        .chat-input-container button {
+            width: auto;
+            padding: 0 24px;
+            border-radius: 20px;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border-bottom-left-radius: 4px;
+            gap: 4px;
+            align-items: center;
+        }
+        .dot { width: 6px; height: 6px; background: white; border-radius: 50%; animation: blink 1.4s infinite both; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+        /* Mobile Responsive */
+        .menu-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.3); width: auto; padding: 8px 12px; }
+        
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; padding: 8px; }
+            .sidebar { 
+                position: absolute; left: 0; top: 0; height: 100%; width: 100%; max-width: 300px;
+                transform: translateX(-100%); background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(25px);
+            }
+            .sidebar.active { transform: translateX(0); }
+            .menu-toggle { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar / Settings -->
+    <div class="glass-panel sidebar" id="sidebar">
+        <h2>OmniKeys</h2>
+        <div class="input-group">
+            <label>Active Provider</label>
+            <select id="provider-select" onchange="updateModelList()">
+                <option value="openrouter">OpenRouter</option>
+                <option value="groq">Groq</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="together">Together AI</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="ollama">Local (Ollama)</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Model</label>
+            <select id="model-select"></select>
+        </div>
+        
+        <div style="height: 1px; background: var(--glass-border); margin: 10px 0;"></div>
+        
+        <h2>Keychain Vault</h2>
+        <div id="key-inputs" style="overflow-y: auto; flex:1; padding-right: 5px;">
+            <!-- Key inputs generated by JS -->
+        </div>
+        
+        <button class="btn-primary" onclick="saveKeys()">Save Keys Locally</button>
+        <button onclick="toggleSidebar()" class="menu-toggle" style="margin-top: 10px; display: none;">Close Menu</button>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="glass-panel chat-area">
+        <div class="chat-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <h3 id="current-chat-title" style="font-weight: 500;">Liquid Interface</h3>
+            </div>
+            <span id="status-dot" style="width: 10px; height: 10px; background: #34c759; border-radius: 50%; box-shadow: 0 0 10px #34c759;"></span>
+        </div>
+        
+        <div class="chat-messages" id="chat-box">
+            <div class="message msg-ai">Welcome to OmniChat. Set your API keys in the vault, select a provider, and start chatting. All keys are saved in your browser's local storage.</div>
+            
+            <div class="typing-indicator" id="typing">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <input type="text" id="user-input" placeholder="Type your message..." onkeypress="handleEnter(event)">
+            <button class="btn-primary" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuration & State
+    const providers = {
+        openrouter: { 
+            name: 'OpenRouter', url: 'https://openrouter.ai/api/v1/chat/completions',
+            models: ['meta-llama/llama-3-8b-instruct', 'anthropic/claude-3-haiku', 'google/gemini-pro', 'nousresearch/nous-hermes-2-mixtral-8x7b-dpo']
+        },
+        groq: { 
+            name: 'Groq', url: 'https://api.groq.com/openai/v1/chat/completions',
+            models: ['llama3-8b-8192', 'llama3-70b-8192', 'mixtral-8x7b-32768']
+        },
+        gemini: { 
+            name: 'Gemini', url: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+            models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+        },
+        together: { 
+            name: 'Together AI', url: 'https://api.together.xyz/v1/chat/completions',
+            models: ['meta-llama/Llama-3-8b-chat-hf', 'mistralai/Mixtral-8x7B-Instruct-v0.1']
+        },
+        deepseek: {
+            name: 'DeepSeek', url: 'https://api.deepseek.com/chat/completions',
+            models: ['deepseek-chat', 'deepseek-coder']
+        },
+        ollama: {
+            name: 'Local (Ollama)', url: 'http://localhost:11434/api/chat',
+            models: ['llama3', 'mistral', 'phi3']
+        }
+    };
+
+    let chatHistory = [];
+
+    // Initialize UI
+    window.onload = () => {
+        generateKeyInputs();
+        loadKeys();
+        updateModelList();
+        
+        if(window.innerWidth <= 768) {
+            document.querySelector('.menu-toggle').style.display = 'block';
+        }
+    };
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    function generateKeyInputs() {
+        const container = document.getElementById('key-inputs');
+        for (const [id, data] of Object.entries(providers)) {
+            if (id === 'ollama') continue; // Local doesn't need key
+            container.innerHTML += `
+                <div class="input-group">
+                    <label>${data.name} API Key</label>
+                    <input type="password" id="key-${id}" placeholder="sk-...">
+                </div>
+            `;
+        }
+    }
+
+    function saveKeys() {
+        const keys = {};
+        for (const id of Object.keys(providers)) {
+            if (id === 'ollama') continue;
+            const val = document.getElementById(`key-${id}`).value;
+            if(val) keys[id] = val;
+        }
+        localStorage.setItem('omni_keys', JSON.stringify(keys));
+        
+        const btn = document.querySelector('.sidebar .btn-primary');
+        const orig = btn.innerText;
+        btn.innerText = "Saved!";
+        btn.style.background = "#34c759";
+        setTimeout(() => { btn.innerText = orig; btn.style.background = ""; }, 2000);
+    }
+
+    function loadKeys() {
+        const keys = JSON.parse(localStorage.getItem('omni_keys') || '{}');
+        for (const [id, key] of Object.entries(keys)) {
+            if(document.getElementById(`key-${id}`)) {
+                document.getElementById(`key-${id}`).value = key;
+            }
+        }
+    }
+
+    function updateModelList() {
+        const providerId = document.getElementById('provider-select').value;
+        const select = document.getElementById('model-select');
+        select.innerHTML = '';
+        providers[providerId].models.forEach(m => {
+            select.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+        document.getElementById('current-chat-title').innerText = `${providers[providerId].name} Chat`;
+    }
+
+    function handleEnter(e) {
+        if(e.key === 'Enter') sendMessage();
+    }
+
+    function appendMessage(role, text) {
+        const box = document.getElementById('chat-box');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message msg-${role === 'user' ? 'user' : 'ai'}`;
+        msgDiv.innerText = text;
+        box.insertBefore(msgDiv, document.getElementById('typing'));
+        box.scrollTop = box.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const inputEl = document.getElementById('user-input');
+        const text = inputEl.value.trim();
+        if(!text) return;
+
+        inputEl.value = '';
+        appendMessage('user', text);
+        chatHistory.push({ role: 'user', content: text });
+
+        const providerId = document.getElementById('provider-select').value;
+        const model = document.getElementById('model-select').value;
+        const typing = document.getElementById('typing');
+        
+        typing.style.display = 'flex';
+        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+
+        let apiKey = '';
+        if (providerId !== 'ollama') {
+            apiKey = document.getElementById(`key-${providerId}`)?.value;
+            if(!apiKey) {
+                typing.style.display = 'none';
+                appendMessage('ai', `Error: Please add your ${providers[providerId].name} API key in the vault.`);
+                return;
+            }
+        }
+
+        try {
+            let responseText = await callAPI(providerId, model, apiKey, text);
+            chatHistory.push({ role: 'assistant', content: responseText });
+            typing.style.display = 'none';
+            appendMessage('ai', responseText);
+        } catch (error) {
+            typing.style.display = 'none';
+            appendMessage('ai', `Error: ${error.message}. (Note: Some APIs strictly block browser requests due to CORS. Use a CORS extension or OpenRouter/Groq/Gemini which usually allow browser fetch).`);
+        }
+    }
+
+    async function callAPI(providerId, model, apiKey, prompt) {
+        const provider = providers[providerId];
+        let url = provider.url;
+        let headers = { 'Content-Type': 'application/json' };
+        let body = {};
+
+        // Format body based on provider format
+        if (providerId === 'gemini') {
+            url = url.replace('{model}', model) + `?key=${apiKey}`;
+            body = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+        } else if (providerId === 'ollama') {
+            body = { model: model, messages: chatHistory, stream: false };
+        } else {
+            // Standard OpenAI format (OpenRouter, Groq, Together, DeepSeek)
+            headers['Authorization'] = `Bearer ${apiKey}`;
+            if(providerId === 'openrouter') {
+                headers['HTTP-Referer'] = window.location.href;
+                headers['X-Title'] = 'OmniChat Liquid';
+            }
+            body = { model: model, messages: chatHistory, temperature: 0.7 };
+        }
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(body)
+        });
+
+        if(!response.ok) {
+            const err = await response.text();
+            throw new Error(`API returned ${response.status}: ${err.substring(0, 50)}...`);
+        }
+
+        const data = await response.json();
+
+        // Extract response based on format
+        if (providerId === 'gemini') {
+            return data.candidates[0].content.parts[0].text;
+        } else if (providerId === 'ollama') {
+            return data.message.content;
+        } else {
+            // Standard OpenAI format
+            return data.choices[0].message.content;
+        }
+    }
+</script>
+
+</body>
+</html>
