@@ -3,606 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Hub - Multi-Provider Chat</title>
+    <title>AI Chat Hub - All Models</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.5.7/dist/index.min.js" defer></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
-        
-        .glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        .glass { 
+            background: rgba(255,255,255,0.1); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .gradient-2 {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        
-        .typing-indicator span {
-            animation: typing 1.4s infinite;
-        }
-        
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
-        }
-        
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        .slide-in-up { animation: slideInUp 0.6s ease-out; }
-        .float { animation: float 3s ease-in-out infinite; }
-        
-        .model-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        
-        .message-bubble {
-            animation: messageSlide 0.3s ease-out;
-        }
-        
-        @keyframes messageSlide {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
+        .pulse { animation: pulse 1.5s infinite; }
+        .model-card:hover { transform: translateY(-4px); }
+        .send-hover:hover { transform: scale(1.05); }
     </style>
 </head>
-<body class="min-h-screen gradient-bg p-4 md:p-8 overflow-hidden">
-    <!-- Header -->
-    <div class="glass rounded-3xl p-6 mb-8 shadow-2xl slide-in-up">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                    <i class="fas fa-robot text-2xl text-white"></i>
-                </div>
-                <div>
-                    <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                        AI Hub
-                    </h1>
-                    <p class="text-white/70 text-sm font-medium">Multi-Provider AI Chat</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <span class="text-white/50 text-sm font-medium">Status: <span id="status-indicator" class="text-green-400 font-bold">Ready</span></span>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-200px)]">
-        <!-- Left Panel - Keys & Models -->
-        <div class="lg:col-span-1 space-y-6">
-            <!-- API Keys -->
-            <div class="glass rounded-2xl p-6 slide-in-up animation-delay-200">
-                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                    <i class="fas fa-key mr-2 text-orange-400"></i>API Keys
-                </h3>
-                <div id="api-keys-container" class="space-y-3 max-h-64 overflow-y-auto scrollbar-thin">
-                    <!-- Dynamic keys will be loaded here -->
-                </div>
-                <button onclick="addApiKey()" class="mt-4 w-full bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center justify-center">
-                    <i class="fas fa-plus mr-2"></i>Add Key
-                </button>
-            </div>
-
-            <!-- Model Selector -->
-            <div class="glass rounded-2xl p-6 slide-in-up animation-delay-400">
-                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                    <i class="fas fa-brain mr-2 text-purple-400"></i>Models
-                </h3>
-                <div class="space-y-2 max-h-80 overflow-y-auto scrollbar-thin">
-                    <div id="model-list" class="grid grid-cols-1 gap-2">
-                        <!-- Models loaded dynamically -->
-                    </div>
-                </div>
-            </div>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen p-4">
+    
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- Header -->
+        <div class="glass rounded-3xl p-8 text-center text-white">
+            <h1 class="text-4xl font-bold mb-2 flex items-center justify-center gap-3 mx-auto">
+                <i class="fas fa-robot text-5xl"></i> AI Chat Hub
+            </h1>
+            <p class="text-xl opacity-90">Chat with 12+ AI providers instantly</p>
+            <div id="status" class="mt-4 text-lg font-semibold text-green-400">✅ Ready - Select a model</div>
         </div>
 
-        <!-- Chat Area -->
-        <div class="lg:col-span-3 space-y-6">
-            <!-- Chat Messages -->
-            <div id="chat-container" class="glass rounded-3xl p-6 h-96 md:h-[500px] overflow-y-auto scrollbar-thin scroll-smooth">
-                <div class="text-center py-20">
-                    <div class="w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm float">
-                        <i class="fas fa-comments text-3xl text-white"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-white/80 mb-2">Welcome to AI Hub</h3>
-                    <p class="text-white/50 max-w-md mx-auto">Select a model and start chatting. All your favorite AI providers in one place.</p>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <!-- API KEYS -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                        <i class="fas fa-key text-yellow-400"></i> API Keys
+                    </h3>
+                    <div id="keys-list" class="space-y-3 max-h-80 overflow-auto mb-4"></div>
+                    <button onclick="addKey()" class="w-full bg-white/20 hover:bg-white/30 text-white py-3 px-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i> Add API Key
+                    </button>
+                </div>
+
+                <!-- MODELS -->
+                <div class="glass rounded-2xl p-6">
+                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2 text-white">
+                        <i class="fas fa-brain text-purple-400"></i> Select Model
+                    </h3>
+                    <div id="models-list" class="space-y-2 max-h-96 overflow-auto"></div>
                 </div>
             </div>
 
-            <!-- Input Area -->
-            <div class="glass rounded-3xl p-6 slide-in-up animation-delay-600">
-                <div class="flex space-x-3">
-                    <div class="flex-1 relative">
-                        <input 
-                            id="message-input" 
-                            type="text" 
-                            placeholder="Type your message... (Ctrl+Enter to send)"
-                            class="w-full bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 backdrop-blur-sm resize-none"
-                        >
-                        <button id="send-btn" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors">
-                            <i class="fas fa-paper-plane text-xl"></i>
+            <!-- CHAT -->
+            <div class="lg:col-span-3 space-y-4">
+                <div id="chat-messages" class="glass rounded-3xl p-6 h-96 lg:h-[500px] overflow-y-auto space-y-4 scroll-smooth"></div>
+                
+                <div class="glass rounded-3xl p-6">
+                    <div class="flex gap-3">
+                        <input id="message-input" type="text" placeholder="Type your message... (Ctrl+Enter)" 
+                            class="flex-1 bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30">
+                        <button id="send-btn" class="glass p-4 rounded-2xl hover:bg-white/30 transition-all send-hover text-white text-xl">
+                            <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
-                    <button onclick="clearChat()" class="glass p-4 rounded-2xl hover:bg-white/30 transition-all duration-300" title="Clear Chat">
-                        <i class="fas fa-trash text-white"></i>
-                    </button>
-                    <button onclick="exportChat()" class="glass p-4 rounded-2xl hover:bg-white/30 transition-all duration-300" title="Export Chat">
-                        <i class="fas fa-download text-white"></i>
-                    </button>
-                </div>
-                <div class="flex items-center mt-3 text-xs text-white/50">
-                    <span>Current Model: <span id="current-model" class="font-semibold text-white">None</span></span>
+                    <div class="text-center mt-3 text-xs text-white/50">
+                        Model: <span id="active-model" class="font-semibold text-white">None selected</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // App State
-        let apiKeys = JSON.parse(localStorage.getItem('aihub_keys')) || {};
-        let messages = JSON.parse(localStorage.getItem('aihub_messages')) || [];
+        // DATA STORAGE
+        let apiKeys = JSON.parse(localStorage.getItem('ai_keys') || '{}');
+        let messages = JSON.parse(localStorage.getItem('chat_history') || '[]');
         let currentModel = null;
-        let isTyping = false;
+        let isLoading = false;
 
-        // All supported providers and models
+        // ALL AI PROVIDERS ✅
         const providers = {
-            openrouter: {
-                name: "OpenRouter",
-                icon: "🌐",
-                baseUrl: "https://openrouter.ai/api/v1/chat/completions",
-                models: ["anthropic/claude-3.5-sonnet", "meta-llama/llama-3.1-405b-instruct", "google/gemini-pro"]
-            },
-            together: {
-                name: "Together AI",
-                icon: "🤝",
-                baseUrl: "https://api.together.xyz/v1/chat/completions",
-                models: ["meta-llama/Llama-3.3-70B-Instruct", "microsoft/Phi-3.5-mini-instruct"]
-            },
-            claude: {
-                name: "Anthropic Claude",
-                icon: "🔵",
-                baseUrl: "https://api.anthropic.com/v1/messages",
-                models: ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
-            },
-            gemini: {
-                name: "Google Gemini",
-                icon: "⭐",
-                baseUrl: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
-                models: ["gemini-1.5-pro", "gemini-1.5-flash"]
-            },
-            huggingface: {
-                name: "Hugging Face",
-                icon: "🐧",
-                baseUrl: "https://api-inference.huggingface.co/models",
-                models: ["mistralai/Mistral-7B-Instruct-v0.3", "microsoft/DialoGPT-large"]
-            },
-            deepseek: {
-                name: "DeepSeek",
-                icon: "⚡",
-                baseUrl: "https://api.deepseek.com/v1/chat/completions",
-                models: ["deepseek-chat", "deepseek-coder"]
-            },
-            vercel: {
-                name: "Vercel AI",
-                icon: "🚀",
-                baseUrl: "https://api.vercel.ai/v1/chat/completions",
-                models: ["gpt-4o-mini"]
-            },
-            xai: {
-                name: "xAI Grok",
-                icon: "🦾",
-                baseUrl: "https://api.x.ai/v1/chat/completions",
-                models: ["grok-beta"]
-            },
-            groq: {
-                name: "Groq",
-                icon: "⚡",
-                baseUrl: "https://api.groq.com/openai/v1/chat/completions",
-                models: ["llama3-70b-8192", "mixtral-8x7b-32768"]
-            },
-            fireworks: {
-                name: "Fireworks AI",
-                icon: "🎆",
-                baseUrl: "https://api.fireworks.ai/inference/v1/chat/completions",
-                models: ["accounts/fireworks/models/llama-v3p1-405b-instruct", "mixtral-8x22b"]
-            },
-            local: {
-                name: "Local Models",
-                icon: "🏠",
-                baseUrl: "ws://localhost:11434/api/chat",
-                models: ["llama3", "mistral", "phi3"]
-            },
-            puter: {
-                name: "Puter.js",
-                icon: "☁️",
-                baseUrl: "https://api.puter.com/ai/chat",
-                models: ["gpt-4o", "claude-3-5-sonnet"]
-            }
+            'openrouter': { name: 'OpenRouter', base: 'https://openrouter.ai/api/v1/chat/completions', models: ['anthropic/claude-3.5-sonnet', 'meta-llama/llama-3.1-405b-instruct'] },
+            'groq': { name: 'Groq', base: 'https://api.groq.com/openai/v1/chat/completions', models: ['llama3-70b-8192', 'mixtral-8x7b-32768'] },
+            'together': { name: 'Together AI', base: 'https://api.together.xyz/v1/chat/completions', models: ['meta-llama/Llama-3.1-405B-Instruct'] },
+            'deepseek': { name: 'DeepSeek', base: 'https://api.deepseek.com/v1/chat/completions', models: ['deepseek-chat'] },
+            'fireworks': { name: 'Fireworks', base: 'https://api.fireworks.ai/inference/v1/chat/completions', models: ['accounts/fireworks/models/llama-v3p1-405b-instruct'] },
+            'xai': { name: 'xAI Grok', base: 'https://api.x.ai/v1/chat/completions', models: ['grok-beta'] },
+            'local': { name: 'Local Ollama', base: 'ws://localhost:11434/api/chat', models: ['llama3', 'phi3'] },
+            'huggingface': { name: 'HuggingFace', base: 'https://api-inference.huggingface.co/models', models: ['microsoft/DialoGPT-large'] }
         };
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            loadApiKeys();
+        // INIT
+        function init() {
+            loadKeys();
             loadModels();
             loadChat();
-            setupEventListeners();
-            updateStatus('Ready');
-        });
-
-        function setupEventListeners() {
-            const input = document.getElementById('message-input');
-            const sendBtn = document.getElementById('send-btn');
-
-            input.addEventListener('keypress', function(e) {
-                if (e.ctrlKey && e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-
-            sendBtn.addEventListener('click', sendMessage);
-            input.addEventListener('input', function() {
-                sendBtn.style.opacity = input.value.trim() ? '1' : '0.5';
-            });
+            setupEvents();
         }
 
-        function addApiKey() {
-            const provider = prompt('Enter provider name (openrouter, together, etc.):');
-            if (!provider || !providers[provider]) {
-                alert('Invalid provider! Use: ' + Object.keys(providers).join(', '));
-                return;
-            }
+        function setupEvents() {
+            document.getElementById('send-btn').onclick = sendMessage;
+            document.getElementById('message-input').onkeypress = (e) => {
+                if (e.ctrlKey && e.key === 'Enter') sendMessage();
+            };
+        }
+
+        // API KEYS
+        function addKey() {
+            const provider = prompt('Provider (openrouter/groq/together/deepseek/fireworks/xai/local/huggingface):');
+            if (!providers[provider]) return alert('Invalid provider!');
             
-            const key = prompt('Enter your API key:');
+            const key = prompt('Enter API Key:');
             if (key) {
                 apiKeys[provider] = key;
-                localStorage.setItem('aihub_keys', JSON.stringify(apiKeys));
-                loadApiKeys();
+                localStorage.setItem('ai_keys', JSON.stringify(apiKeys));
+                loadKeys();
+                alert('✅ Key saved for ' + providers[provider].name);
             }
         }
 
-        function loadApiKeys() {
-            const container = document.getElementById('api-keys-container');
-            container.innerHTML = '';
-
-            Object.entries(apiKeys).forEach(([provider, key]) => {
-                const maskedKey = key.slice(0, 10) + '...' + key.slice(-10);
-                const div = document.createElement('div');
-                div.className = 'glass p-3 rounded-xl text-sm flex items-center justify-between hover:bg-white/20 transition-all duration-300';
-                div.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-lg">${providers[provider]?.icon || '🔑'}</span>
-                        <span>${providers[provider]?.name || provider}</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-white/60 font-mono">${maskedKey}</span>
-                        <button onclick="removeApiKey('${provider}')" class="text-red-400 hover:text-red-300">
-                            <i class="fas fa-trash text-sm"></i>
+        function loadKeys() {
+            const list = document.getElementById('keys-list');
+            list.innerHTML = Object.keys(apiKeys).length ? 
+                Object.entries(apiKeys).map(([p,k]) => 
+                    `<div class="flex justify-between items-center p-3 bg-white/10 rounded-xl">
+                        <span>${providers[p]?.name || p}: ${k.slice(0,20)}...</span>
+                        <button onclick="deleteKey('${p}')" class="text-red-400 hover:text-red-300">
+                            <i class="fas fa-trash"></i>
                         </button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-
-            if (Object.keys(apiKeys).length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-white/50">No API keys added. Click "Add Key" to get started.</div>';
-            }
+                    </div>`
+                ).join('') : 
+                '<div class="text-white/50 text-center py-8">Add your first API key 👆</div>';
         }
 
-        function removeApiKey(provider) {
+        function deleteKey(provider) {
             delete apiKeys[provider];
-            localStorage.setItem('aihub_keys', JSON.stringify(apiKeys));
-            loadApiKeys();
+            localStorage.setItem('ai_keys', JSON.stringify(apiKeys));
+            loadKeys();
         }
 
+        // MODELS
         function loadModels() {
-            const container = document.getElementById('model-list');
-            container.innerHTML = '';
-
-            Object.entries(providers).forEach(([providerKey, provider]) => {
-                const hasKey = apiKeys[providerKey];
-                provider.models.forEach(model => {
+            const list = document.getElementById('models-list');
+            list.innerHTML = '';
+            
+            Object.entries(providers).forEach(([id, prov]) => {
+                const hasKey = apiKeys[id];
+                prov.models.forEach(model => {
                     const div = document.createElement('div');
-                    div.className = `model-card p-4 rounded-xl cursor-pointer transition-all duration-300 hover:scale-[1.02] ${hasKey ? 'hover:bg-white/20 bg-white/10' : 'bg-white/5 opacity-50 cursor-not-allowed'}`;
-                    div.onclick = hasKey ? () => selectModel(providerKey, model) : null;
+                    div.className = `model-card p-4 rounded-xl cursor-pointer transition-all border-2 ${hasKey ? 'hover:bg-white/20 border-white/30 bg-white/10 hover:scale-105' : 'border-white/20 opacity-50 cursor-not-allowed'}`;
                     div.innerHTML = `
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-lg">${provider.icon}</span>
-                                <div>
-                                    <div class="font-semibold text-white">${model.split('/').pop()}</div>
-                                    <div class="text-xs text-white/60">${provider.name}</div>
-                                </div>
+                            <div>
+                                <div class="font-semibold text-white">${model.split('/').pop()}</div>
+                                <div class="text-sm text-white/70">${prov.name}</div>
                             </div>
-                            ${hasKey ? '<i class="fas fa-check-circle text-green-400"></i>' : '<i class="fas fa-lock text-white/30"></i>'}
-                        </div>
-                    `;
-                    container.appendChild(div);
+                            ${hasKey ? '✅' : '🔒'}
+                        </div>`;
+                    div.onclick = hasKey ? () => selectModel(id, model) : null;
+                    list.appendChild(div);
                 });
             });
         }
 
         function selectModel(provider, model) {
             currentModel = { provider, model };
-            document.getElementById('current-model').textContent = `${providers[provider].name}: ${model.split('/').pop()}`;
-            document.querySelectorAll('.model-card').forEach(card => card.classList.remove('ring-2', 'ring-blue-400'));
-            event.currentTarget.classList.add('ring-2', 'ring-blue-400');
+            document.getElementById('active-model').textContent = `${providers[provider].name}: ${model.split('/').pop()}`;
+            document.getElementById('status').textContent = `✅ Active: ${providers[provider].name}`;
+            document.querySelectorAll('.model-card').forEach(el => el.classList.remove('ring-4', 'ring-blue-400'));
+            event.target.closest('.model-card').classList.add('ring-4', 'ring-blue-400');
         }
 
+        // CHAT
         async function sendMessage() {
-            if (!currentModel || isTyping) return;
+            if (!currentModel || isLoading) return;
             
             const input = document.getElementById('message-input');
-            const message = input.value.trim();
-            if (!message) return;
+            const text = input.value.trim();
+            if (!text) return;
 
             // Add user message
-            addMessage('user', message);
+            addMessage('You', text, 'user');
             input.value = '';
             
-            // Send to API
-            isTyping = true;
-            updateStatus('Thinking...');
-            addTypingIndicator();
+            // AI Response
+            isLoading = true;
+            document.getElementById('status').textContent = '🤔 AI is thinking...';
+            addMessage(providers[currentModel.provider].name, '⏳ Thinking...', 'ai', true);
 
             try {
-                const response = await callAI(message);
-                removeTypingIndicator();
-                addMessage('assistant', response);
-            } catch (error) {
-                console.error(error);
-                addMessage('assistant', `Error: ${error.message}. Please check your API key and try again.`);
-            } finally {
-                isTyping = false;
-                updateStatus('Ready');
+                const response = await fetchAI(text);
+                updateLastMessage(response);
+            } catch (e) {
+                updateLastMessage(`❌ Error: ${e.message}. Check your API key?`);
             }
-        }
-
-        async function callAI(message) {
-            const { provider, model } = currentModel;
-            const apiKey = apiKeys[provider];
             
-            const commonPayload = {
-                messages: [
-                    { role: "system", content: "You are a helpful AI assistant." },
-                    { role: "user", content: message }
-                ],
-                temperature: 0.7,
-                max_tokens: 2000
-            };
-
-            // Provider-specific handling
-            switch(provider) {
-                case 'openrouter':
-                case 'together':
-                case 'deepseek':
-                case 'vercel':
-                case 'xai':
-                case 'groq':
-                case 'fireworks':
-                    return fetch(providers[provider].baseUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ model, ...commonPayload })
-                    }).then(r => r.json()).then(data => data.choices[0].message.content);
-
-                case 'claude':
-                    return fetch(providers[provider].baseUrl, {
-                        method: 'POST',
-                        headers: {
-                            'x-api-key': apiKey,
-                            'anthropic-version': '2023-06-01',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model,
-                            max_tokens: 2000,
-                            messages: [{ role: "user", content: message }]
-                        })
-                    }).then(r => r.json()).then(data => data.content[0].text);
-
-                case 'gemini':
-                    return fetch(`${providers[provider].baseUrl}?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: message }] }],
-                            generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
-                        })
-                    }).then(r => r.json()).then(data => data.candidates[0].content.parts[0].text);
-
-                case 'huggingface':
-                    return fetch(`${providers[provider].baseUrl}/${model}:chat`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ inputs: message, parameters: { max_new_tokens: 2000 } })
-                    }).then(r => r.json()).then(data => data.generated_text);
-
-                case 'local':
-                    // Ollama WebSocket
-                    return new Promise((resolve, reject) => {
-                        const ws = new WebSocket(providers[provider].baseUrl);
-                        ws.onopen = () => {
-                            ws.send(JSON.stringify({
-                                model, messages: [{role: "user", content: message}], stream: false
-                            }));
-                        };
-                        ws.onmessage = (event) => {
-                            const data = JSON.parse(event.data);
-                            if (data.done) {
-                                ws.close();
-                                resolve(data.message.content);
-                            }
-                        };
-                        ws.onerror = reject;
-                    });
-
-                case 'puter':
-                    return fetch(providers[provider].baseUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model, messages: [{role: "user", content: message}] })
-                    }).then(r => r.json()).then(data => data.choices[0].message.content);
-
-                default:
-                    throw new Error('Unsupported provider');
-            }
-        }
-
-        function addMessage(role, content) {
-            messages.push({ role, content, timestamp: new Date() });
+            isLoading = false;
+            document.getElementById('status').textContent = '✅ Ready';
             saveChat();
+        }
+
+        async function fetchAI(message) {
+            const { provider, model } = currentModel;
+            const key = apiKeys[provider];
+            
+            // OpenAI-compatible (most providers)
+            if (['openrouter','groq','together','deepseek','fireworks','xai'].includes(provider)) {
+                const res = await fetch(providers[provider].base, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${key}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model, messages: [{role: 'user', content: message}], temperature: 0.7, max_tokens: 1500
+                    })
+                });
+                const data = await res.json();
+                return data.choices[0].message.content;
+            }
+            
+            // Local Ollama
+            if (provider === 'local') {
+                const ws = new WebSocket(providers[provider].base);
+                return new Promise((resolve, reject) => {
+                    ws.onopen = () => ws.send(JSON.stringify({model, messages: [{role: 'user', content: message}], stream: false}));
+                    ws.onmessage = e => {
+                        try {
+                            const data = JSON.parse(e.data);
+                            if (data.message?.content) resolve(data.message.content);
+                        } catch {}
+                    };
+                    setTimeout(() => reject('Local server timeout'), 30000);
+                });
+            }
+            
+            throw new Error('Provider not supported yet');
+        }
+
+        function addMessage(sender, text, type = 'user', loading = false) {
+            messages.push({ sender, text, type, time: new Date().toLocaleTimeString() });
             renderChat();
-            scrollToBottom();
+            document.getElementById('chat-messages').scrollTop = 999999;
         }
 
-        function addTypingIndicator() {
-            const container = document.getElementById('chat-container');
-            const indicator = document.createElement('div');
-            indicator.id = 'typing-indicator';
-            indicator.className = 'message-bubble p-4 mb-4';
-            indicator.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-gradient-2 rounded-full flex items-center justify-center">
-                        <span class="text-xs font-bold text-white">${providers[currentModel.provider]?.icon}</span>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-white text-sm">${providers[currentModel.provider]?.name}</div>
-                        <div class="typing-indicator flex space-x-1 mt-1">
-                            <span class="w-2 h-2 bg-white/50 rounded-full block"></span>
-                            <span class="w-2 h-2 bg-white/50 rounded-full block"></span>
-                            <span class="w-2 h-2 bg-white/50 rounded-full block"></span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.appendChild(indicator);
-            scrollToBottom();
-        }
-
-        function removeTypingIndicator() {
-            const indicator = document.getElementById('typing-indicator');
-            if (indicator) indicator.remove();
+        function updateLastMessage(text) {
+            messages[messages.length - 1].text = text;
+            renderChat();
         }
 
         function renderChat() {
-            const container = document.getElementById('chat-container');
-            container.innerHTML = '';
-
-            messages.forEach((msg, index) => {
-                const div = document.createElement('div');
-                div.className = `message-bubble ${msg.role === 'user' ? 'mb-6' : 'mb-4'}`;
-                
-                if (msg.role === 'user') {
-                    div.innerHTML = `
-                        <div class="flex justify-end">
-                            <div class="max-w-[70%] bg-white/20 backdrop-blur-sm rounded-2xl p-4 rounded-br-none">
-                                <p class="text-white text-sm leading-relaxed">${msg.content}</p>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    const providerIcon = currentModel ? providers[currentModel.provider]?.icon : '🤖';
-                    div.innerHTML = `
-                        <div class="flex items-start space-x-3">
-                            <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                <span class="text-lg">${providerIcon}</span>
-                            </div>
-                            <div class="max-w-[70%]">
-                                <div class="font-semibold text-white text-sm mb-1">${providers[currentModel.provider]?.name || 'AI'}</div>
-                                <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 rounded-tl-none">
-                                    <p class="text-white text-sm leading-relaxed">${msg.content}</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                container.appendChild(div);
-            });
-        }
-
-        function scrollToBottom() {
-            const container = document.getElementById('chat-container');
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function clearChat() {
-            if (confirm('Clear all messages?')) {
-                messages = [];
-                saveChat();
-                renderChat();
-            }
-        }
-
-        function exportChat() {
-            const data = JSON.stringify(messages, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `aihub-chat-${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-        }
-
-        function saveChat() {
-            localStorage.setItem('aihub_messages', JSON.stringify(messages));
+            const chat = document.getElementById('chat-messages');
+            chat.innerHTML = messages.map(msg => `
+                <div class="${msg.type === 'user' ? 'flex justify-end' : 'flex gap-3'}">
+                    ${msg.type !== 'user' ? `<div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 mt-1 text-white font-bold">${msg.sender[0]}</div>` : ''}
+                    <div class="${msg.type === 'user' ? 'bg-white/20 rounded-2xl rounded-br-none' : 'bg-white/10 rounded-2xl rounded-tl-none'} p-4 max-w-[75%] backdrop-blur-sm">
+                        <div class="font-semibold text-white text-sm mb-1">${msg.sender}</div>
+                        <div class="text-white text-sm ${msg.type === 'ai' && msg.loading ? 'pulse' : ''}">${msg.text}</div>
+                        <div class="text-xs text-white/50 mt-2">${msg.time}</div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function loadChat() {
             renderChat();
         }
 
-        function updateStatus(status) {
-            document.getElementById('status-indicator').textContent = status;
+        function saveChat() {
+            localStorage.setItem('chat_history', JSON.stringify(messages.slice(-50))); // Keep last 50
         }
 
-        // Add animation delays
-        const style = document.createElement('style');
-        style.textContent = `
-            .animation-delay-200 { animation-delay: 0.2s; }
-            .animation-delay-400 { animation-delay: 0.4s; }
-            .animation-delay-600 { animation-delay: 0.6s; }
-        `;
-        document.head.appendChild(style);
+        // START
+        init();
     </script>
 </body>
 </html>
